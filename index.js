@@ -42,7 +42,40 @@ app.get('/', (req, res) => {
     if (req.session.numPageHits == null) {
         req.session.numPageHits = 0;
     }
-    res.send(`You are visitor number ${++req.session.numPageHits}!`);
+    // html to send to /login page
+    var html = `
+    <h1>You have visited ${++req.session.numPageHits} times this session!</h1>
+    <a href="/login">Login</a>
+    <a href="/createUser">Register</a>
+    <a href="/logout">Log Out</a>
+    `
+
+    // html = `
+    // <h1>You have visited ${++req.session.numPageHits} times this session!</h1> 
+    // button to /login`;
+    res.send(html);
+
+
+});
+
+app.get('/nosql-injection', async (req,res) => {
+	var username = req.query.user;
+
+	if (!username) {
+		res.send(`<h3>no user provided</h3>`);
+		return;
+	}
+
+	const schema = Joi.string().max(20).required();
+	const validationResult = schema.validate(username);
+
+	if (validationResult.error != null) {  
+	   console.log(validationResult.error);
+	   res.send("<h1 style='color:red;'>A NoSQL injection attack was detected!!</h1>");
+	   return;
+	}	
+
+    res.send(`<h1>Hello ${username}</h1>`);
 });
 
 // app.get('/about', (req, res) => {
@@ -104,6 +137,14 @@ app.get('/createUser', (req, res) => {
     res.send(html);
 });
 
+app.get('/logout', (req,res) => {
+	req.session.destroy();
+    var html = `
+    You are logged out.
+    `;
+    res.send(html);
+});
+
 app.get('/login', (req, res) => {
     var html = `
     log in
@@ -116,31 +157,21 @@ app.get('/login', (req, res) => {
     res.send(html);
 });
 
-app.post('/submitUser', (req, res) => {
-    var usernameSubmitted  = req.body.username;
-    var passwordSubmitted = req.body.password;
+app.post('/submitUser', async (req, res) => {
+    var username = req.body.username;
+    var password = bcrypt.hashSync(req.body.password, saltRounds);
 
-    var hashedPassword = bcrypt.hashSync(passwordSubmitted, saltRounds);
-    
-    if (users.find((user) => user.username == usernameSubmitted)) {
-        res.send(`<h1>Username already exists</h1>`);
+    const results = await usersModel.findOne({
+        username: username
+    });
+
+    if (results != null) {
+        res.send(`<h1>Username already exists</h1> <br>
+        <a href="/createUser">Register</a>`);
         return
     }
 
-    if(usernameSubmitted == 'admin') {
-        users.push({ username: usernameSubmitted, password: hashedPassword, type: 'administrator' });
-    } else {
-        users.push({ username: usernameSubmitted, password: hashedPassword, type: 'non-administrator' });
-    }
-
-    console.log(users);
-
-    var userhtml = ""
-    for (var i = 0; i < users.length; i++) {
-        userhtml += `<h1>Username: ${users[i].username} Password: ${users[i].password}</h1>`;
-    }
-
-    var html = `<ul>${userhtml}</ul>`;
+    var html = `<ul>Account Created</ul>`;
     res.send(html);
 
 });
