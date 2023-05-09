@@ -1,3 +1,12 @@
 <li> 
     <%= user.username %>: <%= user.type %> 
-</li>
+    <form method="POST" action="/promote">
+      <input type="hidden" name="username" value="<%= user.username %>">
+      <button type="submit" class="btn btn-primary">Primary</button>
+    </form>
+    <form method="POST" action="/demote">
+        <input type="hidden" name="username" value="<%= user.username %>">
+        <button type="button" class="btn btn-secondary">Secondary</button>
+      </form>
+
+  </li>

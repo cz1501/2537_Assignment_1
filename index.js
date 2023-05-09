@@ -181,6 +181,31 @@ app.get('/adminOnly', async (req, res) => {
     res.render("admin", {userCurrent: req.session.username, users: usersList});
 });
 
+app.post('/demote', async (req, res) => {
+    const newType = "non-administrator"
+
+    const updatedb = await usersModel.updateOne({
+        username: req.body.username
+    }, {
+        type: newType
+    })
+
+    res.redirect('/adminOnly');
+
+})
+
+app.post('/promote', async (req, res) => {
+    const newType = "administrator"
+
+    const updatedb = await usersModel.updateOne({
+        username: req.body.username
+    }, {
+        type: newType
+    })
+
+    res.redirect('/adminOnly');
+})
+
 
 app.get("*", (req, res) => {
     res.render("errorPage", {error: 404, message: "Page not found!"});
