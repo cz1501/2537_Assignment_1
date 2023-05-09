@@ -13,8 +13,6 @@ async function main() {
 
     await mongoose.connect(`mongodb+srv://${mongodb_user}:${mongodb_password}@${mongodb_host}/comp2537w1?retryWrites=true&w=majority`);
 
-    // await mongoose.connect('mongodb://127.0.0.1:27017/comp2537w1');
-
     console.log("Connected to database");
 
     app.listen(port, () => {

@@ -1,5 +1,6 @@
 require('./utils.js'); // This is the file where we define the include function
 require('dotenv').config();
+
 const express = require('express');
 const session = require('express-session');
 const usersModel = require('./models/w1user');
@@ -12,6 +13,7 @@ const app = express();
 
 const Joi = require('joi');
 
+const ejs = require('ejs');
 
 //MongoDB
 const mongodb_host = process.env.MONGODB_HOST
@@ -28,7 +30,7 @@ var mongoStore = MongoStore.create({
     }
 });
 
-app.use(session({     // session middlewarei
+app.use(session({     // session middleware
     secret: node_session_secret,
     store: mongoStore,        // connect-mongo session store
     saveUninitialized: false,
@@ -37,24 +39,30 @@ app.use(session({     // session middlewarei
 
 app.use(express.urlencoded({ extended: false })); // for parsing application/x-www-form-urlencoded
 
+app.set('view engine', 'ejs');
 
 app.get('/', (req, res) => {
-    if (req.session.numPageHits == null) {
-        req.session.numPageHits = 0;
-    }
+
+    if (req.session.username == null) {
+        res.render("welcomeNew");
+    } else {
+        res.render("welcome", {userName: req.session.username});
+    }   
+    // if (req.session.numPageHits == null) {
+    //     req.session.numPageHits = 0;
+    // }
+
     // html to send to /login page
-    var html = `
-    <h1>You have visited ${++req.session.numPageHits} times this session!</h1>
-    <a href="/login">Login</a>
-    <a href="/createUser">Register</a>
-    <a href="/logout">Log Out</a>
-    `
+    // var html = `
+    // <h1>You have visited ${++req.session.numPageHits} times this session!</h1>
+    // <a href="/login">Login</a>
+    // <a href="/createUser">Register</a>
+    // <a href="/logout">Log Out</a>
+    // `
 
     // html = `
     // <h1>You have visited ${++req.session.numPageHits} times this session!</h1> 
     // button to /login`;
-    res.send(html);
-
 
 });
 
@@ -211,7 +219,8 @@ app.get('/loggedIn', (req, res) => {
 // only for authenticated users
 const authenticatedOnly = (req, res, next) => {
     if (!req.session.authenticated) {
-        return res.status(401).json({ error: 'not authenticated' });
+        return res.redirect('/login');
+        // return res.status(401).json({ error: 'not authenticated' });
     } 
     next();
 };
@@ -222,10 +231,11 @@ app.use(express.static('public'));
 
 app.get('/protectedRoute', (req, res) => {
 
-    const randomImageNumber = Math.floor(Math.random() * 3) + 1;
-    const imageName = `00${randomImageNumber}.jpg`;
+    // const randomImageNumber = Math.floor(Math.random() * 3) + 1;
+    // const imageName = `00${randomImageNumber}.jpg`;
     
-    res.send(`<h1>You are on the protected page, ${req.session.username}</h1> <br>  <img src="${imageName}" />`);
+    res.render("member", {userName: req.session.username});
+    // res.send(`<h1>You are on the protected page, ${req.session.username}</h1> <br>  <img src="${imageName}" />`);
 });
 
 // only for administrators
@@ -235,20 +245,23 @@ const protectedRouteForAdminsOnly = async (req, res, next) => {
     });
 
     if (results?.type != 'administrator') {
-        return res.status(401).json({ error: 'not authorized' });
+        return res.render("errorPage", {error: 403, message: "You are not an administrator!"});
+        // return res.status(401).json({ error: 'not authorized' });
     }
     next();
 };
 app.use(protectedRouteForAdminsOnly);
 
-app.get('/adminOnly', (req, res) => {  
-    res.send(`<h1>You are on the admin page, ${req.session.username}</h1>`);
+app.get('/adminOnly', async (req, res) => {  
+    const usersList = await usersModel.find()
+    res.render("admin", {userCurrent: req.session.username, users: usersList});
 });
 
 
 app.get("*", (req, res) => {
-    res.status(404);
-    res.send(`<h1>Page not found - 404</h1>`);
+    res.render("errorPage", {error: 404, message: "Page not found!"});
+    // res.status(404);
+    // res.send(`<h1>Page not found - 404</h1>`);
 
 });
 
