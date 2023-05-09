@@ -48,21 +48,6 @@ app.get('/', (req, res) => {
     } else {
         res.render("welcome", {userName: req.session.username});
     }   
-    // if (req.session.numPageHits == null) {
-    //     req.session.numPageHits = 0;
-    // }
-
-    // html to send to /login page
-    // var html = `
-    // <h1>You have visited ${++req.session.numPageHits} times this session!</h1>
-    // <a href="/login">Login</a>
-    // <a href="/createUser">Register</a>
-    // <a href="/logout">Log Out</a>
-    // `
-
-    // html = `
-    // <h1>You have visited ${++req.session.numPageHits} times this session!</h1> 
-    // button to /login`;
 
 });
 
@@ -86,53 +71,7 @@ app.get('/nosql-injection', async (req,res) => {
     res.send(`<h1>Hello ${username}</h1>`);
 });
 
-// app.get('/about', (req, res) => {
-//     var color = req.query.color;
-//     var bg = req.query.bg;
 
-//     res.send(`<h1 style='color:${color}; background-color:${bg}'>This is the about page. The color is ${color}</h1>`);
-// });
-
-// app.get('/contact', (req, res) => {
-//     var missingEmail = req.query.missing;
-//     var html = `
-//         <h1>email address:</h1>
-//         <form action="/submitEmail" method="post">
-//             <input type="text" name="email" placeholder='email'/>
-//             <input type="submit" value="Submit" />
-//         </form>
-//     `;
-//     if (missingEmail) {
-//         html += `<h2 style='color:red'>Please enter an email address</h2>`;
-//     }
-
-//     res.send(html);
-
-// });
-
-// app.post('/submitEmail', (req, res) => {
-//     var email = req.body.email;
-//     if (!email) {
-//         res.redirect('/contact?missing=1');
-//     } else {
-//         res.send(`<h1>Thank you for submitting your email address: ${email}</h1>`);
-//     }
-// });
-
-
-// app.get('/cat/:id', (req, res) => {
-
-//     var cat = req.params.id;
-
-//     if (cat == 1) {
-//         res.send(`<h1>Meow</h1>`);
-//     } else if (cat == 2) {
-//         res.send(`<h1>Meow Meow</h1>`);
-//     } else {
-//         res.send(`<h1>Ruff</h1>`);
-//     }
-
-// });
 
 app.get('/createUser', (req, res) => {
     var html = `
@@ -147,22 +86,11 @@ app.get('/createUser', (req, res) => {
 
 app.get('/logout', (req,res) => {
 	req.session.destroy();
-    var html = `
-    You are logged out.
-    `;
-    res.send(html);
+    res.render("logout")
 });
 
 app.get('/login', (req, res) => {
-    var html = `
-    log in
-    <form action="/loggingIn" method="post">
-        <input type="text" name="username" placeholder='username'/>
-        <input type="text" name="password" placeholder='password'/>
-        <input type="submit" value="Submit" />
-    </form>
-    `;
-    res.send(html);
+    res.render("login")
 });
 
 app.post('/submitUser', async (req, res) => {
@@ -212,7 +140,7 @@ app.get('/loggedIn', (req, res) => {
         res.redirect('/login');
     }
 
-    res.send(`<h1>You are logged in ${req.session.username}</h1>`);
+    res.redirect('/');
 
 });
 
@@ -220,7 +148,6 @@ app.get('/loggedIn', (req, res) => {
 const authenticatedOnly = (req, res, next) => {
     if (!req.session.authenticated) {
         return res.redirect('/login');
-        // return res.status(401).json({ error: 'not authenticated' });
     } 
     next();
 };
@@ -230,12 +157,9 @@ app.use(authenticatedOnly);
 app.use(express.static('public'));
 
 app.get('/protectedRoute', (req, res) => {
-
-    // const randomImageNumber = Math.floor(Math.random() * 3) + 1;
-    // const imageName = `00${randomImageNumber}.jpg`;
     
     res.render("member", {userName: req.session.username});
-    // res.send(`<h1>You are on the protected page, ${req.session.username}</h1> <br>  <img src="${imageName}" />`);
+
 });
 
 // only for administrators
@@ -260,8 +184,6 @@ app.get('/adminOnly', async (req, res) => {
 
 app.get("*", (req, res) => {
     res.render("errorPage", {error: 404, message: "Page not found!"});
-    // res.status(404);
-    // res.send(`<h1>Page not found - 404</h1>`);
 
 });
 
